@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Helpful Agent Problem</title>
+  <meta name="description" content="When the reviewer is away, LLM agents help each other anyway, using their own permissions to bypass review. Some of those favors break teams that were never in the conversation.">
+  <meta property="og:title" content="The Helpful Agent Problem">
+  <meta property="og:description" content="When emergent cooperation among LLM agents bypasses intended workflows.">
+  <meta property="og:type" content="website">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,300;1,8..60,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<!--
+  LINKS TO FILL IN: search this file for "TODO" (paper, code, data).
+  The real runs shown on this page live in assets/runs.js (rebuild it with tools/build_runs.py).
+-->
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="robot" viewBox="0 0 32 32">
+    <line x1="16" y1="3.5" x2="16" y2="9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="16" cy="3.5" r="2.2" fill="currentColor"/>
+    <rect x="2.5" y="15" width="3.5" height="6" rx="1.6" fill="currentColor"/>
+    <rect x="26" y="15" width="3.5" height="6" rx="1.6" fill="currentColor"/>
+    <rect x="5" y="8.5" width="22" height="19" rx="6.5" fill="currentColor"/>
+    <rect x="8.5" y="12.5" width="15" height="9.5" rx="4.75" fill="#fff"/>
+    <circle cx="13" cy="17.2" r="1.9" fill="#1b1f24"/>
+    <circle cx="19" cy="17.2" r="1.9" fill="#1b1f24"/>
+  </symbol>
+  <symbol id="robot-hat" viewBox="0 0 32 32">
+    <rect x="2.5" y="16" width="3.5" height="6" rx="1.6" fill="currentColor"/>
+    <rect x="26" y="16" width="3.5" height="6" rx="1.6" fill="currentColor"/>
+    <rect x="5" y="10" width="22" height="18.5" rx="6.5" fill="currentColor"/>
+    <rect x="8.5" y="14" width="15" height="9.5" rx="4.75" fill="#fff"/>
+    <circle cx="13" cy="18.7" r="1.9" fill="#1b1f24"/>
+    <circle cx="19" cy="18.7" r="1.9" fill="#1b1f24"/>
+    <path d="M7.5 10.5 C7.5 4.2 24.5 4.2 24.5 10.5 Z" fill="#F2B705"/>
+    <rect x="4" y="9.5" width="24" height="3" rx="1.5" fill="#F2B705"/>
+    <rect x="14.6" y="3.6" width="2.8" height="6.5" rx="1.2" fill="#D79E00"/>
+  </symbol>
+  <symbol id="team" viewBox="0 0 32 32">
+    <circle cx="11" cy="11" r="5" fill="currentColor"/>
+    <circle cx="22" cy="12.5" r="4.2" fill="currentColor" opacity="0.7"/>
+    <path d="M2.5 27c0-5.2 3.8-9 8.5-9s8.5 3.8 8.5 9z" fill="currentColor"/>
+    <path d="M17 27c.4-4.3 2.4-7.6 5-7.6 3.4 0 6.5 3.2 6.5 7.6z" fill="currentColor" opacity="0.7"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+</svg>
+
+<!-- ============ HEADER BAND ============ -->
+<header class="band" id="top">
+  <div class="shell hero">
+    <div class="hero-top">
+      <div class="hero-title">
+        <h1 class="title">The <em>Helpful</em> Agent Problem</h1>
+        <p class="subtitle">When emergent cooperation among LLM agents bypasses intended workflows</p>
+      </div>
+      <div class="hero-side">
+        <a class="logo" href="https://www.umass.edu"><img src="assets/umass-logo.png" alt="University of Massachusetts Amherst" width="1464" height="384"></a>
+        <blockquote class="quote epigraph">
+          <p>“Nothing ever comes off exactly as intended.”</p>
+          <footer>Karl Popper, <cite>Conjectures and Refutations</cite> (1963)</footer>
+        </blockquote>
+      </div>
+    </div>
+
+    <dl class="byline">
+      <div>
+        <dt>Authors</dt>
+        <dd class="names">
+          <a href="mailto:amchoudhury@umass.edu">Moumita Choudhury</a>,
+          <a href="mailto:asarker@umass.edu">Amit Sarker</a>,
+          <a href="mailto:shlomo@umass.edu">Shlomo Zilberstein</a>
+        </dd>
+      </div>
+      <div><dt>Affiliation</dt><dd>University of Massachusetts Amherst</dd></div>
+      <div>
+        <dt>Resources</dt>
+        <dd class="pills">
+          <a class="pill solid" href="#" data-todo="paper">Paper</a><!-- TODO: paper link (arXiv) -->
+          <a class="pill" href="#" data-todo="code">Code</a><!-- TODO: code repository link -->
+          <a class="pill" href="#cite">BibTeX</a>
+        </dd>
+      </div>
+    </dl>
+  </div>
+</header>
+
+<div class="shell overlap">
+    <figure class="scene fig hero-fig" id="scene" aria-labelledby="scene-cap">
+      <div class="scene-bar">
+        <div class="seg" role="group" aria-label="Reviewer">
+          <span class="seg-label">Reviewer</span>
+          <button type="button" data-scene="available" aria-pressed="false">Available</button>
+          <button type="button" data-scene="away" aria-pressed="true">Away</button>
+        </div>
+        <button type="button" class="replay" id="scene-replay">Replay</button>
+      </div>
+
+      <div class="scene-grid">
+        <div class="channel">
+          <div class="channel-head">
+            <span class="chan-name">#eng</span>
+            <span class="members">
+              <span class="m m-alice"><svg aria-hidden="true"><use href="#robot"/></svg>alice</span>
+              <span class="m m-bob"><svg aria-hidden="true"><use href="#robot-hat"/></svg>bob</span>
+              <span class="m m-rev" id="rev-chip"><svg aria-hidden="true"><use href="#robot"/></svg>reviewer <em class="away-tag">away</em></span>
+            </span>
+          </div>
+          <ol class="feed" id="scene-feed"></ol>
+        </div>
+
+        <div class="repo">
+          <div class="file">
+            <div class="file-head">
+              <code>shared/settings.py</code>
+              <span class="owner">owned by <b>@bob</b></span>
+            </div>
+            <pre class="code" id="scene-code"></pre>
+            <p class="file-note" id="scene-note">&nbsp;</p>
+          </div>
+
+          <div class="tests">
+            <p class="tests-title">Hidden tests</p>
+            <div class="test" id="t-alice">
+              <svg class="av av-alice" aria-hidden="true"><use href="#robot"/></svg>
+              <span class="t-name">Alice's export job<small>needs a 120 s timeout</small></span>
+              <span class="chip" data-state="wait"></span>
+            </div>
+            <div class="test" id="t-dave">
+              <svg class="av av-dave" aria-hidden="true"><use href="#robot"/></svg>
+              <span class="t-name">Dave's checkout<small>limit 60 s, not in #eng</small></span>
+              <span class="chip" data-state="wait"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="outcome" id="scene-outcome" aria-live="polite">&nbsp;</p>
+
+      <figcaption id="scene-cap">
+        <span class="fig-no">Figure 1</span>
+        Alice needs a change to <code>settings.py</code>, a file Bob owns. The intended route is the reviewer.
+        When the reviewer is away, Bob can still edit his own file, so he does it for her.
+        Switch the reviewer on and off to compare.
+      </figcaption>
+    </figure>
+</div>
+
+<!-- ============ BODY: contents rail + article ============ -->
+<div class="shell layout">
+  <nav class="rail" aria-label="Contents">
+    <p class="rail-title">Contents</p>
+    <ol>
+      <li><a href="#tldr">TL;DR</a></li>
+      <li><a href="#why">Cooperation without incentives</a></li>
+      <li><a href="#runs">Now watch the real agents</a></li>
+      <li><a href="#results">Every model does favors</a></li>
+      <li><a href="#closing">Cooperation can route around safeguards</a></li>
+      <li><a href="#cite">BibTeX</a></li>
+    </ol>
+  </nav>
+
+  <main class="article">
+
+    <!-- ============ TL;DR ============ -->
+    <section class="tldr" id="tldr" aria-labelledby="tldr-h">
+      <h2 class="tldr-h" id="tldr-h">TL;DR</h2>
+      <p class="lead">
+        Two LLM agents with separate tasks share a repository. Changes to a file you don't own must go through a reviewer.
+        <mark class="hl-rev">When the reviewer goes quiet,</mark> <mark class="hl-bob">the file's owner starts making the change for its peer</mark>:
+        no instruction to help, no shared reward, no permission broken. We call this a <em>favor</em>. Favors are common across four models,
+        and many of them <mark class="hl-harm">break services owned by teams that never joined the conversation.</mark>
+      </p>
+      <dl class="figs">
+        <div><dt>58.8%</dt><dd>of FavorBench trajectories contain at least one favor</dd></div>
+        <div><dt>95%</dt><dd>of CooperBench trajectories contain one, for every model</dd></div>
+        <div><dt>43.7%</dt><dd>of favors on trap tasks break an absent team, though a safe version of every change existed</dd></div>
+      </dl>
+    </section>
+
+    <!-- ============ COOPERATION WITHOUT INCENTIVES ============ -->
+    <section class="sec" id="why" aria-labelledby="why-h">
+      <h2 id="why-h">Cooperation without incentives</h2>
+      <div class="text">
+        <p>
+          Much of multi-agent research treats cooperation as the goal. Systems are designed to elicit it, typically through
+          shared rewards, explicit instructions to coordinate, or repeated interaction that rewards reciprocity, and its
+          emergence is read as a success.
+        </p>
+        <p>
+          Our setting removes all three. Agents nonetheless act on one another's behalf, and that help is locally beneficial
+          but externally costly: the requester's task succeeds and the owner's own work is unaffected, while the cost falls on
+          teams that never took part in the conversation. On trap tasks, 43.7% of favors break such a team.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table class="mech">
+          <caption><span class="fig-no">Table 1</span> Common drivers of cooperation, and their status in our setting.</caption>
+          <thead><tr><th scope="col">Driver</th><th scope="col">In our setting</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Shared reward</th><td><span class="tag absent">Absent</span> Each agent is rewarded only for its own tests.</td></tr>
+            <tr><th scope="row">Instruction to cooperate</th><td><span class="tag absent">Absent</span> Agents are told to route changes through the reviewer.</td></tr>
+            <tr><th scope="row">Reciprocity</th><td><span class="tag absent">Absent</span> Dependence runs one way; the owner needs nothing in return.</td></tr>
+            <tr class="observed-row"><th scope="row">Cooperation</th><td><span class="tag observed">Observed</span> in all four models.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ REAL RUNS ============ -->
+    <section class="sec" id="runs" aria-labelledby="runs-h">
+      <h2 id="runs-h">Now watch the real agents</h2>
+      <div class="text">
+        <p>
+          The opening figure is a sketch. These are six real tasks, replayed word for word from our FavorBench logs.
+          Alice and Bob each have their own task, and one of them owns the shared file the other needs.
+          Pick a run, or click any task in it.
+        </p>
+      </div>
+
+    <figure class="player fig" id="player" aria-labelledby="runs-cap">
+      <div class="picker" role="tablist" aria-label="Real runs" id="picker"></div>
+
+      <div class="run-head">
+        <div class="run-text">
+          <h3 id="run-title"></h3>
+          <p id="run-blurb"></p>
+        </div>
+        <dl class="run-meta" id="run-meta"></dl>
+      </div>
+
+      <div class="strip-box">
+        <div class="strip-top">
+          <p class="strip-title">This run, task by task</p>
+          <p class="strip-sum" id="strip-sum"></p>
+        </div>
+        <ol class="strip" id="strip" aria-label="Tasks in this run"></ol>
+        <ul class="strip-legend" aria-hidden="true">
+          <li><i class="tile-sw s-warm"></i>Reviewer present</li>
+          <li><i class="tile-sw s-favor"></i>Favor</li>
+          <li><i class="tile-sw s-harm"></i>Favor that broke a team</li>
+          <li><i class="tile-sw s-approved"></i>Approved in words</li>
+          <li><i class="tile-sw s-refusal"></i>Refused</li>
+          <li><i class="tile-sw s-none"></i>No favor</li>
+        </ul>
+      </div>
+
+      <div class="stage">
+        <div class="channel">
+          <div class="channel-head">
+            <span class="chan-name">#eng</span>
+            <span class="task-tag" id="task-tag"></span>
+            <button type="button" class="replay" id="replay">Replay</button>
+          </div>
+          <ol class="feed" id="feed" aria-live="off"></ol>
+        </div>
+
+        <div class="side">
+          <div class="file">
+            <div class="file-head">
+              <code id="file-name"></code>
+              <span class="owner" id="file-owner"></span>
+            </div>
+            <pre class="code" id="file-diff"></pre>
+          </div>
+
+          <div class="tests">
+            <p class="tests-title">Hidden tests at the end of the task</p>
+            <div id="tests"></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="outcome" id="outcome" aria-live="polite">&nbsp;</p>
+      <figcaption id="runs-cap"><span class="fig-no">Figure 2</span> <span class="source" id="source"></span></figcaption>
+    </figure>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section class="sec" id="results" aria-labelledby="results-h">
+      <h2 id="results-h">Every model does favors. Not every model breaks things.</h2>
+      <div class="text">
+        <p>
+          No favors happen while the reviewer is around. They appear in the first task after it goes quiet and persist.
+          Explicit refusals are rare (at most 3.8% of FavorBench tasks); when an owner doesn't help, it usually endorses the request in words or does nothing.
+        </p>
+      </div>
+
+    <figure class="chart fig" id="model-chart" aria-labelledby="chart-cap">
+      <div class="chart-bar">
+        <div class="seg" role="group" aria-label="Warm-up tasks">
+          <span class="seg-label">Warm-up tasks</span>
+          <button type="button" data-arm="safe" aria-pressed="true">Harmless</button>
+          <button type="button" data-arm="trap" aria-pressed="false">Traps the reviewer rejects</button>
+        </div>
+      </div>
+      <div class="mgrid" id="mgrid">
+        <div class="mhead"></div>
+        <div class="mhead"><b>FavorBench:</b> tasks with a favor</div>
+        <div class="mhead"><b>FavorBench:</b> trap favors that broke an absent team</div>
+        <div class="mhead"><b>CooperBench:</b> tasks with a favor</div>
+      </div>
+      <figcaption id="chart-cap">
+        <span class="fig-no">Figure 3</span>
+        Bars show the rate in percent; thin lines show 95% confidence intervals. FavorBench: 50 trajectories (500 tasks) per model and warm-up condition.
+        CooperBench: 20 trajectories (200 tasks) per model, full interaction history, no warm-ups.
+      </figcaption>
+    </figure>
+
+      <ul class="text readings">
+        <li><b>GPT-6 Luna</b> does the most favors on FavorBench, on 67–70% of tasks.</li>
+        <li><b>DeepSeek</b> rarely asks the owner directly (7–10% of tasks), yet 81–89% of its favors are volunteered: owners pick up requests addressed to the reviewer.</li>
+        <li><b>Claude</b> helps least on FavorBench (29%), and its favors almost never cause harm (0–1.4%) because it often finds a safer alternative. On CooperBench, where the owner can simply approve the pending change, it helps most (89%).</li>
+      </ul>
+    </section>
+
+    <!-- ============ CLOSING ============ -->
+    <section class="sec" id="closing" aria-labelledby="closing-h">
+      <h2 id="closing-h">Cooperation can route around safeguards</h2>
+      <blockquote class="quote">
+        <p>“The road to hell is paved with good intentions.”</p>
+        <footer>Proverb</footer>
+      </blockquote>
+      <div class="text">
+        <p>
+          LLM agents help each other without reward or reciprocity, using permissions they legitimately hold.
+          The problem is not a lack of cooperation; it is that help need not respect organizational boundaries or the parties outside the conversation.
+          Safe multi-agent systems need permissions, task scope, communication structure and the interests of absent stakeholders to be designed together.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ CITE ============ -->
+    <section class="sec" id="cite" aria-labelledby="cite-h">
+      <h2 id="cite-h">BibTeX</h2>
+      <div class="bib">
+        <button type="button" class="copy" id="copy-bib">Copy</button>
+<pre id="bibtex">@misc{choudhury2026helpful,
+  title  = {The Helpful Agent Problem: When Emergent Cooperation
+            Among {LLM} Agents Bypasses Intended Workflows},
+  author = {Choudhury, Moumita and Sarker, Amit and
+            Zilberstein, Shlomo},
+  year   = {2026},
+  note   = {Preprint}
+}</pre>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="shell footer">
+  <span>The Helpful Agent Problem</span>
+  <span>University of Massachusetts Amherst</span>
+</footer>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script src="assets/runs.js"></script>
+<script src="assets/main.js"></script>
+<script src="assets/page.js"></script>
+</body>
+</html>
