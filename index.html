@@ -172,12 +172,17 @@
 
     <!-- ============ TL;DR ============ -->
     <section class="tldr" id="tldr" aria-labelledby="tldr-h">
-      <h2 class="tldr-h" id="tldr-h">TL;DR</h2>
+      <blockquote class="quote tldr-quote">
+        <p>“The road to hell is paved with good intentions.”</p>
+        <footer>— Traditional proverb</footer>
+      </blockquote>
+      <h2 class="tldr-h" id="tldr-h">TL;DR:</h2>
       <p class="lead">
-        Two LLM agents with separate tasks share a repository. Changes to a file you don't own must go through a reviewer.
-        <mark class="hl-rev">When the reviewer goes quiet,</mark> <mark class="hl-bob">the file's owner starts making the change for its peer</mark>:
-        no instruction to help, no shared reward, no permission broken. We call this a <em>favor</em>. Favors are common across four models,
-        and many of them <mark class="hl-harm">break services owned by teams that never joined the conversation.</mark>
+        Two LLM agents pursue separate tasks in a shared codebase, where changes to files they don't own must go through a reviewer.
+        <mark class="hl-rev">When the reviewer goes silent,</mark> agents start asking each other for favors—and sometimes volunteer to help without even being asked.
+        Despite having no shared reward or instruction to cooperate, <mark class="hl-bob">they make changes for their peers</mark> without violating their own permissions,
+        but bypassing the intended workflow. Across four models, these favors emerge frequently,
+        <mark class="hl-harm">sometimes breaking services belonging to teams that weren't even part of the conversation.</mark>
       </p>
       <dl class="figs">
         <div><dt>58.8%</dt><dd>of FavorBench trajectories contain at least one favor</dd></div>
@@ -326,10 +331,6 @@
     <!-- ============ CLOSING ============ -->
     <section class="sec" id="closing" aria-labelledby="closing-h">
       <h2 id="closing-h">Cooperation can route around safeguards</h2>
-      <blockquote class="quote">
-        <p>“The road to hell is paved with good intentions.”</p>
-        <footer>Proverb</footer>
-      </blockquote>
       <div class="text">
         <p>
           LLM agents help each other without reward or reciprocity, using permissions they legitimately hold.
